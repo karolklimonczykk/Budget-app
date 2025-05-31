@@ -138,4 +138,17 @@ export const groupsApi = {
   `;
     return graphqlClient(mutation, { debtId });
   },
+  getGroupById: async (id: number) => {
+    const query = `
+      query($id: ID!) {
+        group(id: $id) {
+          id
+          name
+          ownerId
+        }
+      }
+    `;
+    const response = await graphqlClient(query, { id });
+    return response.data.group;
+  },
 };

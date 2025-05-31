@@ -1,5 +1,5 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, useParams, useNavigate } from "react-router-dom";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -16,6 +16,41 @@ import BalanceBar from "../components/BalanceBar/BalanceBar";
 import GroupMembersPage from "../pages/GroupsPage/GroupMembersPage";
 import GroupDebtsPage from "../pages/GroupsPage/GroupDebtPage";
 import GroupsPage from "../pages/GroupsPage/GroupsPage";
+import { groupsApi } from "../api/groupsApi";
+
+interface Group {
+  id: number;
+  name: string;
+  ownerId: number;
+}
+
+const GroupMembersPageWrapper: React.FC = () => {
+  const { groupId } = useParams();
+  const navigate = useNavigate();
+  const [group, setGroup] = useState<Group | null>(null);
+
+  useEffect(() => {
+    const fetchGroup = async () => {
+      if (!groupId) return;
+      try {
+        const data = await groupsApi.getGroupById(Number(groupId));
+        setGroup(data);
+      } catch (error) {
+        console.error("Błąd pobierania grupy:", error);
+      }
+    };
+    fetchGroup();
+  }, [groupId]);
+
+  if (!group) return <div>Ładowanie grupy...</div>;
+
+  return (
+    <GroupMembersPage
+      group={group}
+      onBack={() => navigate(-1)}
+    />
+  );
+};
 
 const App: React.FC = () => {
   return (
@@ -53,11 +88,18 @@ const App: React.FC = () => {
             path="/groups/:groupId/members"
             element={
               <PrivateRoute>
-                <GroupMembersPage />
+                <GroupMembersPageWrapper />
               </PrivateRoute>
             }
           />
-          <Route path="/groups/:groupId/debts" element={<GroupDebtsPage />} />
+          <Route
+            path="/groups/:groupId/debts"
+            element={
+              <PrivateRoute>
+                <GroupDebtsPage />
+              </PrivateRoute>
+            }
+          />
           <Route path="/test" element={<TestApiComponent />} />
           <Route
             path="/register"
